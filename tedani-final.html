@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stiaan Tedani — Behavior · Capital · High-Performance Systems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black:  #0a0805;
+  --soil:   #141008;
+  --deep:   #1c1610;
+  --ember:  #b85a22;
+  --gold:   #c49a3a;
+  --ash:    #ede8dc;
+  --mid:    #a09484;
+  --smoke:  #5a5248;
+  --paper:  #f5f0e6;
+  --cream:  #faf7f0;
+  --white:  #ffffff;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--black);
+  color: var(--ash);
+  font-family: 'Barlow', sans-serif;
+  font-size: 17px;
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+
+/* GRAIN TEXTURE */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.45;
+}
+
+/* ── UTILITIES ── */
+.mono {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ember);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.eyebrow::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: var(--ember);
+  flex-shrink: 0;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 1s ease, transform 1s ease;
+}
+.reveal.visible { opacity: 1; transform: none; }
+.reveal.visible.delay-1 { transition-delay: 0.1s; }
+.reveal.visible.delay-2 { transition-delay: 0.2s; }
+.reveal.visible.delay-3 { transition-delay: 0.3s; }
+.reveal.visible.delay-4 { transition-delay: 0.4s; }
+
+/* ─────────────────────────────────────────
+   HERO
+───────────────────────────────────────── */
+.hero {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .hero { grid-template-columns: 1fr; }
+}
+
+.hero-photo {
+  position: relative;
+  overflow: hidden;
+  background: var(--deep);
+}
+
+.hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  filter: grayscale(20%) contrast(1.05);
+  display: block;
+}
+
+.hero-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, transparent 60%, var(--black) 100%),
+              linear-gradient(to top, var(--black) 0%, transparent 30%);
+}
+
+@media (max-width: 768px) {
+  .hero-photo { height: 55vw; min-height: 260px; }
+  .hero-photo::after {
+    background: linear-gradient(to bottom, transparent 60%, var(--black) 100%);
+  }
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: clamp(40px, 6vw, 100px) clamp(28px, 5vw, 80px);
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 768px) {
+  .hero-content {
+    padding: 32px 24px 56px;
+  }
+}
+
+.hero-kicker {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ember);
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeUp 1s ease 0.3s forwards;
+}
+
+.hero-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  color: var(--ash);
+  margin-bottom: 8px;
+  opacity: 0;
+  animation: fadeUp 1s ease 0.5s forwards;
+}
+
+.hero-name em {
+  display: block;
+  font-style: italic;
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 0.6em;
+  letter-spacing: 0.04em;
+}
+
+.hero-descriptor {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--smoke);
+  margin-top: 20px;
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: fadeUp 1s ease 0.75s forwards;
+}
+
+.hero-line {
+  font-size: clamp(17px, 1.8vw, 20px);
+  font-weight: 300;
+  color: var(--mid);
+  max-width: 420px;
+  line-height: 1.7;
+  opacity: 0;
+  animation: fadeUp 1s ease 1s forwards;
+}
+
+.hero-line strong { color: var(--ash); font-weight: 500; }
+
+/* ─────────────────────────────────────────
+   NAMING SECTION
+───────────────────────────────────────── */
+.naming {
+  padding: clamp(80px, 12vw, 160px) clamp(28px, 7vw, 100px);
+  max-width: 900px;
+  position: relative;
+}
+
+.naming::before {
+  content: '"';
+  position: absolute;
+  top: clamp(40px, 6vw, 80px);
+  left: clamp(0px, 3vw, 40px);
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(200px, 30vw, 400px);
+  color: var(--ember);
+  opacity: 0.05;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.naming-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ember);
+  margin-bottom: 40px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.naming-date::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: var(--ember);
+}
+
+.naming h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(34px, 5.5vw, 62px);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.25;
+  color: var(--ash);
+  margin-bottom: 48px;
+}
+
+.naming h2 strong {
+  font-style: normal;
+  font-weight: 900;
+  color: var(--gold);
+}
+
+.naming-body p {
+  font-size: clamp(16px, 1.6vw, 19px);
+  font-weight: 300;
+  color: var(--mid);
+  line-height: 1.85;
+  margin-bottom: 22px;
+  max-width: 680px;
+}
+
+.naming-body p strong { color: var(--ash); font-weight: 500; }
+
+.naming-body p em { color: var(--gold); font-style: italic; }
+
+/* Video placeholder */
+.video-placeholder {
+  margin: 48px 0;
+  background: var(--deep);
+  border: 1px solid rgba(201,154,58,0.2);
+  aspect-ratio: 16/9;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.video-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(184,90,34,0.08) 0%, transparent 70%);
+}
+
+.play-icon {
+  width: 60px;
+  height: 60px;
+  border: 1px solid rgba(201,154,58,0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.play-icon::after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 18px solid var(--gold);
+  margin-left: 4px;
+}
+
+.video-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--smoke);
+  position: relative;
+  z-index: 1;
+}
+
+/* The name reveal */
+.name-reveal {
+  margin: 56px 0;
+  padding: 48px 0;
+  border-top: 1px solid rgba(201,154,58,0.15);
+  border-bottom: 1px solid rgba(201,154,58,0.15);
+}
+
+.name-reveal .question {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--smoke);
+  margin-bottom: 20px;
+}
+
+.name-reveal .answer {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(52px, 10vw, 120px);
+  font-weight: 900;
+  font-style: italic;
+  color: var(--gold);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.name-reveal .translation {
+  margin-top: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ember);
+}
+
+/* ─────────────────────────────────────────
+   BEFORE / AFTER
+───────────────────────────────────────── */
+.transformation {
+  background: var(--paper);
+  color: var(--black);
+  padding: clamp(60px, 10vw, 140px) clamp(28px, 7vw, 100px);
+}
+
+.transformation .eyebrow { color: var(--ember); }
+.transformation .eyebrow::before { background: var(--ember); }
+
+.transformation h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(30px, 4.5vw, 52px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--black);
+  margin-bottom: 12px;
+}
+
+.transformation h2 em {
+  font-style: italic;
+  color: var(--ember);
+}
+
+.transformation .t-lead {
+  font-size: clamp(15px, 1.6vw, 18px);
+  font-weight: 300;
+  color: #5a4e38;
+  max-width: 580px;
+  margin-bottom: 56px;
+  line-height: 1.8;
+}
+
+.ba-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  max-width: 820px;
+}
+
+@media (max-width: 560px) {
+  .ba-grid { grid-template-columns: 1fr; }
+}
+
+.ba-card {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4/5;
+  background: #1a1410;
+}
+
+.ba-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.ba-card.before img { filter: grayscale(40%) contrast(1.1); }
+
+.ba-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 32px 24px 24px;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+}
+
+.ba-label .tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 6px;
+}
+
+.ba-label .caption {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.5;
+}
+
+.ba-card.after .ba-label .tag { color: var(--gold); }
+
+/* ─────────────────────────────────────────
+   THE HARD TRUTH
+───────────────────────────────────────── */
+.truth {
+  padding: clamp(80px, 12vw, 160px) clamp(28px, 7vw, 100px);
+  position: relative;
+  overflow: hidden;
+}
+
+.truth::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--ember), transparent);
+}
+
+.truth-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(40px, 6vw, 100px);
+  align-items: center;
+  max-width: 1100px;
+}
+
+@media (max-width: 700px) {
+  .truth-grid { grid-template-columns: 1fr; }
+}
+
+.truth h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(36px, 5.5vw, 64px);
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--ash);
+  margin-bottom: 28px;
+}
+
+.truth h2 em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.truth-left p {
+  font-size: clamp(16px, 1.6vw, 19px);
+  font-weight: 300;
+  color: var(--mid);
+  line-height: 1.85;
+  margin-bottom: 20px;
+}
+
+.truth-left p strong { color: var(--ash); font-weight: 500; }
+
+.truth-right {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.truth-item {
+  padding: 28px 32px;
+  border-left: 2px solid rgba(201,154,58,0.2);
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.truth-item:hover {
+  border-color: var(--gold);
+  background: rgba(201,154,58,0.04);
+}
+
+.truth-item .t-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: var(--ember);
+  margin-bottom: 8px;
+}
+
+.truth-item h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ash);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.truth-item p {
+  font-size: 14.5px;
+  font-weight: 300;
+  color: var(--smoke);
+  line-height: 1.7;
+}
+
+/* ─────────────────────────────────────────
+   WHAT I BUILD
+───────────────────────────────────────── */
+.build {
+  background: var(--soil);
+  padding: clamp(80px, 12vw, 160px) clamp(28px, 7vw, 100px);
+  position: relative;
+}
+
+.build::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201,154,58,0.3), transparent);
+}
+
+.build-header {
+  max-width: 600px;
+  margin-bottom: 64px;
+}
+
+.build h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(34px, 5vw, 56px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ash);
+  margin-bottom: 16px;
+}
+
+.build h2 em { font-style: italic; color: var(--gold); }
+
+.build-lead {
+  font-size: clamp(16px, 1.6vw, 18px);
+  font-weight: 300;
+  color: var(--mid);
+  line-height: 1.8;
+}
+
+.build-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1px;
+  background: rgba(255,255,255,0.05);
+}
+
+.build-card {
+  background: var(--soil);
+  padding: 40px 36px;
+  border-top: 2px solid transparent;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.build-card:hover {
+  border-color: var(--ember);
+  background: var(--deep);
+}
+
+.build-card .num {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  color: var(--ember);
+  margin-bottom: 20px;
+}
+
+.build-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ash);
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.build-card p {
+  font-size: 14.5px;
+  font-weight: 300;
+  color: var(--smoke);
+  line-height: 1.75;
+}
+
+/* ─────────────────────────────────────────
+   HOW IT WORKS
+───────────────────────────────────────── */
+.process {
+  padding: clamp(80px, 12vw, 160px) clamp(28px, 7vw, 100px);
+}
+
+.process h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(34px, 5vw, 56px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ash);
+  margin-bottom: 16px;
+  max-width: 600px;
+}
+
+.process h2 em { font-style: italic; color: var(--gold); }
+
+.process-lead {
+  font-size: clamp(15px, 1.5vw, 18px);
+  font-weight: 300;
+  color: var(--mid);
+  max-width: 520px;
+  margin-bottom: 72px;
+}
+
+.process-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  max-width: 720px;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 32px;
+  padding: 40px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  align-items: start;
+  transition: padding-left 0.35s ease;
+}
+
+.step:hover { padding-left: 16px; }
+
+.step-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  font-weight: 900;
+  font-style: italic;
+  color: rgba(201,154,58,0.18);
+  line-height: 1;
+  padding-top: 4px;
+  transition: color 0.3s ease;
+}
+
+.step:hover .step-num { color: rgba(201,154,58,0.5); }
+
+.step-content h3 {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--ash);
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.step-content p {
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--smoke);
+  line-height: 1.75;
+}
+
+@media (max-width: 500px) {
+  .step { grid-template-columns: 60px 1fr; gap: 20px; }
+  .step-num { font-size: 36px; }
+}
+
+/* ─────────────────────────────────────────
+   CTA
+───────────────────────────────────────── */
+.cta-section {
+  background: var(--paper);
+  color: var(--black);
+  padding: clamp(80px, 14vw, 180px) clamp(28px, 7vw, 100px);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-bg-word {
+  position: absolute;
+  bottom: -0.08em;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(80px, 18vw, 260px);
+  font-weight: 900;
+  font-style: italic;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(26,16,8,0.07);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.cta-section h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(32px, 5.5vw, 62px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--black);
+  max-width: 700px;
+  margin: 0 auto 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.cta-section h2 em { font-style: italic; color: var(--ember); }
+
+.cta-section p {
+  font-size: clamp(16px, 1.7vw, 19px);
+  font-weight: 300;
+  color: #4a3e28;
+  max-width: 520px;
+  margin: 0 auto 48px;
+  line-height: 1.8;
+  position: relative;
+  z-index: 1;
+}
+
+.cta-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 40px;
+  background: var(--black);
+  color: var(--ash);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.btn-primary:hover { background: var(--ember); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 17px 38px;
+  background: transparent;
+  color: var(--black);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid rgba(26,16,8,0.3);
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--ember);
+  background: rgba(184,90,34,0.06);
+}
+
+/* ─────────────────────────────────────────
+   FOOTER
+───────────────────────────────────────── */
+footer {
+  padding: clamp(40px, 6vw, 72px) clamp(28px, 7vw, 100px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.footer-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 900;
+  font-style: italic;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.footer-brand span {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--smoke);
+  margin-top: 6px;
+}
+
+footer p {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--smoke);
+  text-align: right;
+  line-height: 1.9;
+}
+
+@media (max-width: 560px) { footer p { text-align: left; } }
+
+/* ─────────────────────────────────────────
+   ANIMATIONS
+───────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     HERO
+══════════════════════════════════════ -->
+<section class="hero">
+
+  <div class="hero-photo">
+    <!-- Replace src with your actual portrait photo path -->
+    <img src="ChatGPT_Image_Feb_14__2026__01_54_17_PM.png"
+         alt="Stiaan Tedani"
+         onerror="this.style.display='none'">
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-kicker">Johannesburg · South Africa</div>
+    <div class="hero-name">
+      Stiaan
+      <em>Tedani</em>
+    </div>
+    <div class="hero-descriptor">Behavior · Capital · High-Performance Systems</div>
+    <p class="hero-line">
+      I lost everything — and rebuilt it <strong>from the inside out.</strong><br>
+      Now I help others do the same.
+    </p>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════
+     THE NAMING
+══════════════════════════════════════ -->
+<section class="naming">
+
+  <div class="naming-date reveal">September 2021 · Johannesburg · Rock Bottom</div>
+
+  <h2 class="reveal">
+    A child looked at me and spoke<br>
+    a name <strong>no record had ever held.</strong>
+  </h2>
+
+  <div class="naming-body">
+
+    <p class="reveal">
+      I was a drug addict who had lost everything. My wife. My three children. My self-respect. I was managing a hotel by day — and <strong>wanting to disappear by night.</strong> I didn't even have a front tooth. I had made a plastic replacement myself. That is how broken I was.
+    </p>
+
+    <p class="reveal">
+      After thirty days of searching for any thread of meaning, a little boy named <strong>Conor</strong> looked straight at me. I asked the only question I had left:
+    </p>
+
+    <div class="name-reveal reveal">
+      <div class="question">The question — "Who am I?"</div>
+      <div class="answer">Tedani.</div>
+      <div class="translation">Tshivenda · "Believe me" · "Believe in God"</div>
+    </div>
+
+    <p class="reveal">
+      He answered with complete certainty. No hesitation. No prompting. A word that had <em>virtually no existence</em> in any public record, any database, any AI training set.
+    </p>
+
+    <div class="video-placeholder reveal">
+      <div class="play-icon"></div>
+      <div class="video-label">Original Recording · Sep 12, 2021 · VID-20210912-WA0008</div>
+    </div>
+
+    <p class="reveal">
+      Thirty days later I met Conor's parents. They told me about his developmental challenges. I chose not to ask him again — <strong>I protected the mystery.</strong> In that same moment, he came running down the hallway shouting <em>"Tedani! Tedani!"</em> — and threw his arms around me.
+    </p>
+
+    <p class="reveal">
+      Whether this was synchronicity, grace, or something older than either of those words — it cracked me open. It stripped every excuse and comfortable lie. I stopped trying to <strong>manage</strong> my broken life. I started <strong>architecting</strong> a new one.
+    </p>
+
+    <p class="reveal">
+      <em>That is what I now do for others.</em>
+    </p>
+
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════
+     BEFORE / AFTER
+══════════════════════════════════════ -->
+<div class="transformation">
+
+  <div class="eyebrow reveal">The evidence</div>
+  <h2 class="reveal">What <em>becoming</em> looks like.</h2>
+  <p class="t-lead reveal">
+    This is not a metaphor. The left photo is 2021 — addiction, homelessness, a made-from-plastic front tooth. The right is who refused to stop becoming.
+  </p>
+
+  <div class="ba-grid reveal">
+    <div class="ba-card before">
+      <!-- Replace with actual before photo -->
+      <img src="ChatGPT_Image_Feb_12__2026__08_06_58_PM.png"
+           alt="Before — 2021, Rock Bottom"
+           onerror="this.parentElement.style.background='#1a1410'">
+      <div class="ba-label">
+        <div class="tag">Before · 2021</div>
+        <div class="caption">Addiction. Streets. A plastic tooth. Everything gone.</div>
+      </div>
+    </div>
+    <div class="ba-card after">
+      <!-- Replace with actual after photo -->
+      <img src="ChatGPT_Image_Feb_14__2026__01_54_17_PM.png"
+           alt="After — Rebuilt"
+           onerror="this.parentElement.style.background='#1a1410'">
+      <div class="ba-label">
+        <div class="tag">After · Rebuilt</div>
+        <div class="caption">Same man. Different architecture. Still becoming.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     THE HARD TRUTH
+══════════════════════════════════════ -->
+<section class="truth">
+
+  <div class="truth-grid">
+
+    <div class="truth-left">
+      <div class="eyebrow reveal">The honest part</div>
+      <h2 class="reveal">Your system<br>is the <em>problem.</em></h2>
+      <p class="reveal">Not your effort. Not your intelligence. Not the market. Most leaders don't have a strategy problem. They have <strong>hidden behavioural patterns quietly bleeding</strong> capital, performance, relationships, and potential.</p>
+      <p class="reveal">I know because I was the most extreme version of that — someone who understood psychology deeply and applied it to everyone but himself. The cobbler's children with no shoes. The addiction was just the loudest symptom of a system running the wrong code.</p>
+      <p class="reveal">I find those patterns. I help you replace them with <strong>architecture that actually holds</strong> under pressure — because it was built under pressure.</p>
+    </div>
+
+    <div class="truth-right">
+      <div class="truth-item reveal delay-1">
+        <div class="t-num">Pattern 01</div>
+        <h3>You're managing, not architecting</h3>
+        <p>Management handles problems as they arise. Architecture eliminates the conditions that create them.</p>
+      </div>
+      <div class="truth-item reveal delay-2">
+        <div class="t-num">Pattern 02</div>
+        <h3>Your emotions run the system you think you run</h3>
+        <p>Decision-making under pressure is almost never logical. The body votes first. Most people never audit that vote.</p>
+      </div>
+      <div class="truth-item reveal delay-3">
+        <div class="t-num">Pattern 03</div>
+        <h3>Your capital reflects your psychology exactly</h3>
+        <p>Markets don't lie. Businesses don't lie. The numbers tell you what your beliefs actually are — not what you claim they are.</p>
+      </div>
+      <div class="truth-item reveal delay-4">
+        <div class="t-num">Pattern 04</div>
+        <h3>The story you're in is older than you think</h3>
+        <p>Most behavioural limits were installed before age 12. You've been executing someone else's program ever since.</p>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════
+     WHAT I BUILD
+══════════════════════════════════════ -->
+<section class="build">
+
+  <div class="build-header">
+    <div class="eyebrow reveal">The work</div>
+    <h2 class="reveal">What I <em>build</em><br>with you.</h2>
+    <p class="build-lead reveal">Every offering below is the same work underneath: find what is real, remove what is false, build what lasts.</p>
+  </div>
+
+  <div class="build-grid">
+
+    <div class="build-card reveal">
+      <div class="num">01 · Mind</div>
+      <h3>Behavioral Mastery</h3>
+      <p>Decode and redesign the decision patterns that are sabotaging you — at the level they were installed, not the surface where they show up.</p>
+    </div>
+
+    <div class="build-card reveal">
+      <div class="num">02 · Capital</div>
+      <h3>Capital Systems Architecture</h3>
+      <p>Risk-managed frameworks that protect and grow capital — built on evidence, not hope. Integrates psychology with execution because they cannot be separated.</p>
+    </div>
+
+    <div class="build-card reveal">
+      <div class="num">03 · Performance</div>
+      <h3>Performance Frameworks</h3>
+      <p>Data-driven systems that track only what moves real outcomes. Not activity metrics. Not vanity numbers. The actual signal inside the noise.</p>
+    </div>
+
+    <div class="build-card reveal">
+      <div class="num">04 · Leadership</div>
+      <h3>Leadership Optimization</h3>
+      <p>High-accountability structures that turn teams from reactive to relentless. Built on identity alignment, not incentives alone.</p>
+    </div>
+
+    <div class="build-card reveal">
+      <div class="num">05 · Brand</div>
+      <h3>Digital Build & Voice</h3>
+      <p>Full-stack execution — brand, copy, design, development, strategy. Built for South African realities. Designed to grow beyond them.</p>
+    </div>
+
+    <div class="build-card reveal">
+      <div class="num">06 · Story</div>
+      <h3>Content & Testimony</h3>
+      <p>The things lived through become the content that makes others feel less alone and more capable. Testimony is the most credible signal that exists.</p>
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════
+     PROCESS
+══════════════════════════════════════ -->
+<section class="process">
+
+  <div class="eyebrow reveal">How it works</div>
+  <h2 class="reveal">Three phases.<br><em>One transformation.</em></h2>
+  <p class="process-lead reveal">The process is the same whether we're working on a person, a team, or a business — because the root is always the same.</p>
+
+  <div class="process-steps">
+
+    <div class="step reveal">
+      <div class="step-num">01</div>
+      <div class="step-content">
+        <h3>Pattern Audit</h3>
+        <p>Expose the exact decision signature costing you. Most people can feel something is wrong long before they can name it. This phase names it — precisely, without judgment, with full data.</p>
+      </div>
+    </div>
+
+    <div class="step reveal">
+      <div class="step-num">02</div>
+      <div class="step-content">
+        <h3>Architecture Design</h3>
+        <p>Build a new operating system calibrated to how you actually function — not how you think you should function. This is where NLP, timeline work, and systems thinking converge.</p>
+      </div>
+    </div>
+
+    <div class="step reveal">
+      <div class="step-num">03</div>
+      <div class="step-content">
+        <h3>Performance Under Pressure</h3>
+        <p>Stress-test in real conditions until the new architecture becomes instinct. The system must hold when it costs something — not just when it's comfortable.</p>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════
+     CTA
+══════════════════════════════════════ -->
+<div class="cta-section">
+  <div class="cta-bg-word">Believe.</div>
+  <h2 class="reveal">
+    One decision.<br>
+    <em>Everything changes.</em>
+  </h2>
+  <p class="reveal">
+    If you're tired of performing below what you know you're capable of — and you're ready to face the truth about your patterns — this is where we begin.
+  </p>
+  <div class="cta-buttons reveal">
+    <a href="#" class="btn-primary">Book a Strategy Call</a>
+    <a href="#" class="btn-secondary">Download the Framework</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     FOOTER
+══════════════════════════════════════ -->
+<footer>
+  <div class="footer-brand">
+    Tedani
+    <span>Stiaan · Johannesburg, South Africa</span>
+  </div>
+  <p>
+    NLP Practitioner · Trader · Strategic Architect<br>
+    Behavioral Design · Capital Systems · Truth<br>
+    © 2026
+  </p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
